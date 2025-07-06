@@ -1,0 +1,19 @@
+{
+  "name": "me",
+  "compatibility_date": "2024-01-01",
+  "main": "src/index.ts",
+  "env": {
+    "production": {
+      "name": "me-prod",
+      "vars": {
+        "NODE_ENV": "production"
+      }
+    },
+    "staging": {
+      "name": "me-staging",
+      "vars": {
+        "NODE_ENV": "production"
+      }
+    }
+  }
+}

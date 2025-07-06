@@ -1,0 +1,22 @@
+{
+  "name": "me",
+  "version": "1.0.0",
+  "description": "Router v7 project: me",
+  "main": "src/index.ts",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "start": "wrangler dev --local",
+    "build": "echo 'No build step required for Workers'",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "itty-router": "^4.0.0"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0",
+    "typescript": "^5.0.0",
+    "@cloudflare/workers-types": "^4.0.0"
+  }
+}

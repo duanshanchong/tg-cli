@@ -1,0 +1,19 @@
+{
+  "name": "myapp",
+  "compatibility_date": "2024-01-01",
+  "main": "src/index.ts",
+  "env": {
+    "production": {
+      "name": "myapp-prod",
+      "vars": {
+        "NODE_ENV": "production"
+      }
+    },
+    "staging": {
+      "name": "myapp-staging",
+      "vars": {
+        "NODE_ENV": "production"
+      }
+    }
+  }
+}

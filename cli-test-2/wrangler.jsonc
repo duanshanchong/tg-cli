@@ -1,0 +1,19 @@
+{
+  "name": "cli-test-2",
+  "compatibility_date": "2024-01-01",
+  "main": "src/index.ts",
+  "env": {
+    "production": {
+      "name": "cli-test-2-prod",
+      "vars": {
+        "NODE_ENV": "production"
+      }
+    },
+    "staging": {
+      "name": "cli-test-2-staging",
+      "vars": {
+        "NODE_ENV": "production"
+      }
+    }
+  }
+}
