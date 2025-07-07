@@ -8,12 +8,11 @@ yarn-error.log*
 dist/
 build/
 
-# Environment variables
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+# Environment variables (not needed for Cloudflare Workers projects)
+# .env files are not used in Cloudflare Workers - use wrangler.jsonc instead
+
+# Local development variables (Cloudflare Workers .dev.vars)
+.dev.vars
 
 # IDE
 .vscode/
@@ -56,8 +55,8 @@ jspm_packages/
 # Yarn Integrity file
 .yarn-integrity
 
-# dotenv environment variables file
-.env
+# dotenv environment variables file (not needed for Cloudflare Workers)
+# .env files are not used in Cloudflare Workers - use wrangler.jsonc instead
 
 # parcel-bundler cache (https://parceljs.org/)
 .cache

@@ -22,7 +22,8 @@ export class RouterTemplateGenerator {
     await this.generateRouterConfig(projectPath, config);
     await this.generateEntryPoint(projectPath, config);
     await this.generateRoutes(projectPath, config);
-    await this.generateEnvironment(projectPath, config);
+    await this.generateDevVarsExample(projectPath, config);
+
     
 
   }
@@ -58,34 +59,82 @@ export class RouterTemplateGenerator {
   }
 
   private static async generateWranglerToml(projectPath: string, config: RouterV7Config): Promise<void> {
-    // 生成 wrangler.jsonc 配置文件（现代格式）
-    const wranglerConfig = {
-      name: config.name,
-      compatibility_date: config.wrangler?.compatibility_date || "2024-01-01",
-      main: "src/index.ts",
-      ...(config.wrangler?.compatibility_flags && {
-        compatibility_flags: config.wrangler.compatibility_flags
-      }),
-      env: {
-        production: {
-          name: `${config.name}-prod`,
-          ...(Object.keys(config.environment).length > 0 && {
-            vars: config.environment
-          })
-        },
-        staging: {
-          name: `${config.name}-staging`,
-          ...(Object.keys(config.environment).length > 0 && {
-            vars: config.environment
-          })
+    try {
+      // 读取默认配置模板
+      const templatePath = path.join(__dirname, '..', '..', 'templates', 'default-config.json');
+      const templateContent = fs.readFileSync(templatePath, 'utf-8');
+      
+      // 替换项目名称占位符
+      const configContent = templateContent.replace(/\{\{PROJECT_NAME\}\}/g, config.name);
+      
+      // 解析配置
+      const wranglerConfig = JSON.parse(configContent);
+      
+      // 如果有额外的环境变量，合并到生产环境
+      if (Object.keys(config.environment).length > 0) {
+        if (!wranglerConfig.env.production.vars) {
+          wranglerConfig.env.production.vars = {};
         }
+        Object.assign(wranglerConfig.env.production.vars, config.environment);
       }
-    };
+      
+      // 如果有额外的 wrangler 配置，合并
+      if (config.wrangler?.compatibility_date) {
+        wranglerConfig.compatibility_date = config.wrangler.compatibility_date;
+      }
+      if (config.wrangler?.compatibility_flags) {
+        wranglerConfig.compatibility_flags = config.wrangler.compatibility_flags;
+      }
 
-    fs.writeFileSync(
-      path.join(projectPath, 'wrangler.jsonc'), 
-      JSON.stringify(wranglerConfig, null, 2)
-    );
+      fs.writeFileSync(
+        path.join(projectPath, 'wrangler.jsonc'), 
+        JSON.stringify(wranglerConfig, null, 2)
+      );
+    } catch (error) {
+      // 如果模板文件不存在或读取失败，使用硬编码的默认配置
+      console.warn('Warning: Could not load default config template, using fallback configuration');
+      
+      const wranglerConfig = {
+        name: config.name,
+        compatibility_date: config.wrangler?.compatibility_date || "2024-01-01",
+        main: "src/index.ts",
+        ...(config.wrangler?.compatibility_flags && {
+          compatibility_flags: config.wrangler.compatibility_flags
+        }),
+        env: {
+          production: {
+            vars: {
+              NODE_ENV: "production",
+              API_VERSION: "v1",
+              DEBUG: "false",
+              ...config.environment
+            }
+          },
+          staging: {
+            vars: {
+              NODE_ENV: "staging",
+              API_VERSION: "v1",
+              DEBUG: "true",
+              ...config.environment
+            }
+          },
+          local: {
+            vars: {
+              NODE_ENV: "development",
+              API_VERSION: "v1",
+              DEBUG: "true",
+              MOCK_MODE: "on",
+              ...config.environment
+            }
+          }
+        }
+      };
+
+      fs.writeFileSync(
+        path.join(projectPath, 'wrangler.jsonc'), 
+        JSON.stringify(wranglerConfig, null, 2)
+      );
+    }
   }
 
   private static async generateTypeScriptConfig(projectPath: string): Promise<void> {
@@ -289,15 +338,7 @@ router.get('/api/data', async (request: Request, env: any) => {
     fs.writeFileSync(path.join(routesPath, 'fullstack.ts'), fullstackRoutes);
   }
 
-  private static async generateEnvironment(projectPath: string, config: RouterV7Config): Promise<void> {
-    const envContent = `# Environment variables for ${config.name}
-# Copy this to .env.local for local development
 
-${Object.entries(config.environment).map(([key, value]) => `${key}=${value}`).join('\n')}
-`;
-
-    fs.writeFileSync(path.join(projectPath, '.env.example'), envContent);
-  }
 
   private static async generateDatabaseConfig(projectPath: string): Promise<void> {
     const dbConfig = `// Database configuration
@@ -380,5 +421,29 @@ export async function setCachedData(key: string, value: string, env: any): Promi
 `;
 
     fs.writeFileSync(path.join(projectPath, 'src', 'cache.ts'), cacheConfig);
+  }
+
+  private static async generateDevVarsExample(projectPath: string, config: RouterV7Config): Promise<void> {
+    const devVarsContent = `# Local development environment variables for ${config.name}
+# Copy this file to .dev.vars and fill in your local development values
+# This file is automatically ignored by git (see .gitignore)
+
+# Common variables (override wrangler.jsonc values for local development)
+NODE_ENV=development
+API_VERSION=v1
+DEBUG=true
+
+# Local development specific variables
+MOCK_MODE=on
+LOCAL_API_KEY=your-local-api-key
+LOCAL_DATABASE_URL=your-local-db-url
+
+# Add your local development variables below
+# DATABASE_URL=your-local-database-url
+# JWT_SECRET=your-local-jwt-secret
+# CUSTOM_VAR=your-local-custom-value
+`;
+
+    fs.writeFileSync(path.join(projectPath, '.dev.vars.example'), devVarsContent);
   }
 } 

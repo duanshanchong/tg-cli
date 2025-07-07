@@ -161,18 +161,15 @@ router-cli list-all
 
 ```
 my-awesome-app/
-├── package.json          # 项目依赖和脚本
-├── wrangler.jsonc        # Cloudflare Workers 配置
-├── tsconfig.json         # TypeScript 配置
-├── .env.example          # 环境变量示例
+├── package.json              # 项目依赖和脚本
+├── wrangler.jsonc            # Cloudflare Workers 配置（多环境）
+├── .dev.vars.example         # 本地开发变量模板
+├── tsconfig.json             # TypeScript 配置
 └── src/
-    ├── index.ts          # 应用入口点
-    ├── router.ts         # 路由器配置
+    ├── index.ts              # 应用入口点
+    ├── router.ts             # 路由器配置
     └── routes/
-        ├── index.ts      # 路由索引
-        ├── api.ts        # API 路由 (可选)
-        ├── auth.ts       # 认证路由 (可选)
-        └── database.ts   # 数据库配置 (可选)
+        └── index.ts          # 路由索引
 ```
 
 ## 🌐 部署后的访问
@@ -192,11 +189,45 @@ my-awesome-app/
 ## 🔧 开发指南
 
 ### 本地开发
+
+#### 1. 设置本地开发环境变量
 ```bash
 cd my-awesome-app
+cp .dev.vars.example .dev.vars
+# 编辑 .dev.vars 文件，填入你的本地开发变量
+```
+
+#### 2. 启动本地开发服务器
+```bash
 npm install
 npm run dev
+# 或指定环境
+wrangler dev --env local
 ```
+
+#### 3. 环境切换
+```bash
+# 本地开发环境
+wrangler dev --env local
+
+# 测试环境
+wrangler dev --env staging
+
+# 生产环境
+wrangler dev --env production
+```
+
+### 环境变量管理
+
+#### 本地开发变量 (.dev.vars)
+- 复制 `.dev.vars.example` 为 `.dev.vars`
+- 在 `.dev.vars` 中填入本地开发变量
+- 本地开发时自动生效，不会被提交到仓库
+
+#### 多环境配置 (wrangler.jsonc)
+- `production` - 生产环境变量
+- `staging` - 测试环境变量  
+- `local` - 本地开发环境变量
 
 ### 添加新路由
 在 `src/routes/` 目录下创建新的路由文件：

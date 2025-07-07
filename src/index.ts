@@ -5,6 +5,7 @@ import chalk from 'chalk';
 import { config } from './commands/config';
 import { createProject } from './commands/create-project';
 import { deploy } from './commands/deploy';
+import { dev } from './commands/dev';
 import { listAll } from './commands/list-all';
 import { deleteWorker } from './commands/delete-worker';
 
@@ -19,6 +20,7 @@ program
 program.addCommand(config);
 program.addCommand(createProject);
 program.addCommand(deploy);
+program.addCommand(dev);
 program.addCommand(listAll);
 program.addCommand(deleteWorker);
 
@@ -30,6 +32,7 @@ program.action(() => {
   console.log(chalk.green('Available commands:'));
   console.log(chalk.cyan('  router-cli config          # Configure Cloudflare credentials'));
   console.log(chalk.cyan('  router-cli create-project  # Create a new Router v7 project'));
+  console.log(chalk.cyan('  router-cli dev             # Start local development server'));
   console.log(chalk.cyan('  router-cli deploy          # Deploy project to Cloudflare'));
   console.log(chalk.cyan('  router-cli list-all        # List all deployed projects'));
   

@@ -6,6 +6,7 @@ import fs from 'fs';
 import { WranglerManager } from '../utils/wrangler-manager';
 import { ConfigManager } from '../utils/config-manager';
 import { CloudflareApi } from '../utils/cloudflare-api';
+import { ProjectDetector } from '../utils/project-detector';
 import { spawn } from 'child_process';
 
 /**
@@ -47,17 +48,28 @@ export const deploy = new Command('deploy')
     }
 
     // 确定项目名称和路径
-    const projectName = project || process.cwd().split('/').pop();
-    if (!projectName) {
-      console.log(chalk.red('Could not determine project name. Please specify project name as argument.'));
-      return;
-    }
-
-    // 检查项目目录是否存在
-    const projectPath = path.join(process.cwd(), projectName);
-    if (!fs.existsSync(projectPath)) {
-      console.log(chalk.red(`Project directory "${projectName}" not found at ${projectPath}`));
-      return;
+    let projectName = project;
+    let projectPath: string;
+    
+    if (projectName) {
+      // 如果指定了项目名称，在当前目录下查找
+      projectPath = path.join(process.cwd(), projectName);
+      if (!fs.existsSync(projectPath)) {
+        console.log(chalk.red(`Project directory "${projectName}" not found at ${projectPath}`));
+        return;
+      }
+    } else {
+      // 如果没有指定项目名称，检查当前目录是否为项目目录
+      const projectInfo = ProjectDetector.detectProject();
+      if (!projectInfo.isProject) {
+        console.log(chalk.red('Not in a Router v7 project directory and no project name specified.'));
+        console.log(chalk.cyan('Please either:'));
+        console.log(chalk.cyan('  1. Navigate to a project directory'));
+        console.log(chalk.cyan('  2. Or specify project name: router-cli deploy <project-name>'));
+        return;
+      }
+      projectName = projectInfo.projectName!;
+      projectPath = projectInfo.projectPath!;
     }
 
     // 2. 真正开始部署时才显示 loading

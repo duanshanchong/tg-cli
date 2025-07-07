@@ -22,16 +22,53 @@ router-cli create-project
 # 选择配置：
 # - 项目名称: my-first-app
 # - 模板: basic (推荐新手)
-# - 特性: 保持默认
 ```
 
-### 第三步：部署项目
+### 第三步：本地开发
 ```bash
 # 进入项目目录
 cd my-first-app
 
-# 部署到 Cloudflare
+# 设置本地开发环境变量
+cp .dev.vars.example .dev.vars
+# 编辑 .dev.vars 文件，填入本地开发变量
+
+# 安装依赖并启动本地开发
+npm install
+npm run dev
+```
+
+### 第二步：创建项目
+```bash
+# 创建新项目
+router-cli create-project
+
+# 选择配置：
+# - 项目名称: my-first-app
+# - 模板: basic (推荐新手)
+```
+
+### 第三步：本地开发
+```bash
+# 进入项目目录
+cd my-first-app
+
+# 设置本地开发环境变量
+cp .dev.vars.example .dev.vars
+# 编辑 .dev.vars 文件，填入本地开发变量
+
+# 安装依赖并启动本地开发
+npm install
+npm run dev
+```
+
+### 第四步：部署项目
+```bash
+# 部署到生产环境
 router-cli deploy
+
+# 或部署到测试环境
+router-cli deploy --env staging
 ```
 
 ### 第四步：查看结果
@@ -58,10 +95,17 @@ router-cli create-project
 # 4. 进入项目目录
 cd your-project-name
 
-# 5. 安装依赖
+# 5. 设置本地开发环境变量
+cp .dev.vars.example .dev.vars
+# 编辑 .dev.vars 文件
+
+# 6. 安装依赖
 npm install
 
-# 6. 部署项目
+# 7. 本地开发（可选）
+npm run dev
+
+# 8. 部署项目
 router-cli deploy
 
 # 7. 查看部署结果
@@ -93,15 +137,13 @@ router-cli config --auth-type login
 # 创建基础项目
 router-cli create-project --name my-app --template basic
 
-# 创建 API 项目并立即部署
-router-cli create-project --name my-api --template api --features database,auth --deploy
+# 创建 API 项目
+router-cli create-project --name my-api --template api
 
 # 创建完整项目
 router-cli create-project \
   --name my-fullstack \
-  --template fullstack \
-  --features database,auth,cache,kv,r2 \
-  --env-vars "NODE_ENV=production,API_KEY=your-key"
+  --template fullstack
 ```
 
 ### 非交互式部署

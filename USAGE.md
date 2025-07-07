@@ -39,14 +39,16 @@ router-cli create-project
 # 选择配置：
 # - 项目名称: my-api-app
 # - 模板: api (推荐)
-# - 特性: database, auth
-# - 环境变量: NODE_ENV=production
 ```
 
 ### 3️⃣ 开发部署
 ```bash
 # 进入项目目录
 cd my-api-app
+
+# 设置本地开发环境变量
+cp .dev.vars.example .dev.vars
+# 编辑 .dev.vars 文件，填入本地开发变量
 
 # 安装依赖
 npm install
@@ -111,14 +113,37 @@ router.get('/api/users', () => {
 ```
 
 ### 环境变量配置
+
+#### 本地开发变量 (.dev.vars)
+```bash
+# 复制模板文件
+cp .dev.vars.example .dev.vars
+
+# 编辑 .dev.vars 文件
+NODE_ENV=development
+API_KEY=your-dev-key
+```
+
+#### 多环境配置 (wrangler.jsonc)
 ```json
-// wrangler.jsonc
 {
   "env": {
     "production": {
       "vars": {
         "NODE_ENV": "production",
-        "API_KEY": "your-api-key"
+        "API_KEY": "your-prod-key"
+      }
+    },
+    "staging": {
+      "vars": {
+        "NODE_ENV": "staging", 
+        "API_KEY": "your-staging-key"
+      }
+    },
+    "local": {
+      "vars": {
+        "NODE_ENV": "local",
+        "API_KEY": "your-local-key"
       }
     }
   }

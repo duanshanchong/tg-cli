@@ -1,29 +1,31 @@
 {
-  "project": {
-    "name": "{{PROJECT_NAME}}"
-  },
-  "environment": {
-    "NODE_ENV": "production",
-    "API_VERSION": "v1",
-    "DEBUG": "false"
-  },
-  "wrangler": {
-    "compatibility_date": "2024-01-01",
-    "compatibility_flags": [
-      "nodejs_compat"
-    ],
-    "vars": {
-      "CUSTOM_VAR": "custom-value"
+  "name": "{{PROJECT_NAME}}",
+  "main": "src/index.ts",
+  "compatibility_date": "2024-01-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "env": {
+    "production": {
+      "vars": {
+        "NODE_ENV": "production",
+        "API_VERSION": "v1",
+        "DEBUG": "false",
+        "TEST_XX": "true"
+      }
     },
-    "secrets": [
-      "DATABASE_URL",
-      "JWT_SECRET"
-    ]
-  },
-  "deploy": {
-    "auto_deploy": true,
-    "environments": [
-      "production"
-    ]
+    "staging": {
+      "vars": {
+        "NODE_ENV": "staging",
+        "API_VERSION": "v1",
+        "DEBUG": "true"
+      }
+    },
+    "local": {
+      "vars": {
+        "NODE_ENV": "development",
+        "API_VERSION": "v1",
+        "DEBUG": "true",
+        "MOCK_MODE": "on"
+      }
+    }
   }
 } 

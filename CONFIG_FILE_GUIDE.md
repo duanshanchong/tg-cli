@@ -1,114 +1,140 @@
 # 配置文件使用指南
 
-现在 CLI 支持通过配置文件来设置所有的 wrangler 变量，无需一个个参数传递！
+CLI 支持通过配置文件来设置项目配置，支持多环境和本地开发变量管理！
 
-## 🚀 主要改进
+## 🚀 主要特性
 
-### ✅ 简化了配置系统
-- 移除了 KV 命名空间、R2 存储桶、D1 数据库、Cron 触发器等相关配置
-- 专注于基础的 Router v7 项目配置
-- 更简洁、更轻量
+### ✅ 多环境配置支持
+- 生产环境、测试环境、本地开发环境
+- 环境变量自动管理
+- 本地开发变量隔离
 
-### ✅ 新增配置文件支持
+### ✅ 配置文件模板系统
 - 支持 JSON 格式的配置文件
-- 可以生成配置文件模板
-- 支持基础 wrangler 配置选项
+- 可编辑的默认配置模板
+- 环境变量优先级支持
 
 ## 📋 使用方法
 
-### 1. 生成配置文件模板
+### 1. 使用默认配置模板
 ```bash
-# 生成基础配置文件
-node bin/index.js create-project --generate-config --name "my-project"
+# 创建项目时自动使用默认配置模板
+router-cli create-project --name "my-project"
 
-# 生成指定模板的配置文件
-node bin/index.js create-project --generate-config --name "my-api" --template api
+# 或指定模板
+router-cli create-project --name "my-api" --template api
 ```
 
-### 2. 编辑配置文件
-生成的配置文件包含所有可配置选项：
+### 2. 环境变量管理
+
+#### 本地开发变量 (.dev.vars)
+```bash
+# 复制模板文件
+cp .dev.vars.example .dev.vars
+
+# 编辑 .dev.vars 文件
+NODE_ENV=development
+API_KEY=your-dev-key
+```
+
+#### 多环境配置 (wrangler.jsonc)
 ```json
 {
-  "project": {
-    "name": "my-project",
-    "template": "basic"
-  },
-  "environment": {
-    "NODE_ENV": "production",
-    "API_VERSION": "v1"
-  },
-  "wrangler": {
-    "compatibility_date": "2024-01-01",
-    "compatibility_flags": ["nodejs_compat"],
-    "vars": {...}
-  },
-  "deploy": {
-    "auto_deploy": true
+  "env": {
+    "production": {
+      "vars": {
+        "NODE_ENV": "production",
+        "API_KEY": "your-prod-key"
+      }
+    },
+    "staging": {
+      "vars": {
+        "NODE_ENV": "staging",
+        "API_KEY": "your-staging-key"
+      }
+    },
+    "local": {
+      "vars": {
+        "NODE_ENV": "local",
+        "API_KEY": "your-local-key"
+      }
+    }
   }
 }
 ```
 
-### 3. 使用配置文件创建项目
-```bash
-# 使用配置文件创建项目
-node bin/index.js create-project --config my-project-config.json
+### 3. 环境变量优先级
 
-# 使用配置文件并自动部署
-node bin/index.js create-project --config my-project-config.json --deploy
-```
+CLI 按以下优先级读取环境变量：
+
+1. **环境变量** (最高优先级)
+   - `CLOUDFLARE_API_TOKEN`
+   - `CLOUDFLARE_ACCOUNT_ID`
+
+2. **配置文件**
+   - `~/.router-cli/config.json`
+
+3. **默认值** (最低优先级)
+   - 自动检测的默认值
 
 ## 🔧 脚本使用
 
-### 配置文件部署脚本
+### 简单部署脚本
 ```bash
-# 使用配置文件部署
+# 使用环境变量部署
 ./scripts/example.sh
 ```
 
-### 快速部署脚本（已更新）
+### CI/CD 环境变量
 ```bash
-# 基础部署
-./scripts/quick-deploy.sh my-project
+# 设置环境变量
+export CLOUDFLARE_API_TOKEN="your-api-token"
+export CLOUDFLARE_ACCOUNT_ID="your-account-id"
 
-# 高级部署（包含更多配置）
-./scripts/advanced-deploy.sh my-advanced-project
+# 创建和部署项目
+router-cli create-project --name "my-ci-project"
+cd my-ci-project
+router-cli deploy
 ```
 
-## 📁 配置文件示例
+## 📁 配置示例
 
-### 简单配置
-```json
-{
-  "project": {
-    "name": "my-simple-api",
-    "template": "api"
-  },
-  "environment": {
-    "NODE_ENV": "production"
-  },
-  "wrangler": {
-    "compatibility_date": "2024-01-01"
-  }
-}
+### 本地开发变量 (.dev.vars)
+```bash
+# 本地开发环境变量
+NODE_ENV=development
+API_KEY=your-dev-api-key
+DATABASE_URL=your-dev-database-url
+DEBUG=true
 ```
 
-### 完整配置
+### 多环境配置 (wrangler.jsonc)
 ```json
 {
-  "project": {
-    "name": "my-full-api",
-    "template": "api"
-  },
-  "environment": {
-    "NODE_ENV": "production",
-    "API_VERSION": "v1",
-    "DEBUG": "false"
-  },
-  "wrangler": {
-    "compatibility_date": "2024-01-01",
-    "compatibility_flags": ["nodejs_compat"],
-    "vars": {
-      "CUSTOM_VAR": "custom-value"
+  "name": "my-api-app",
+  "main": "src/index.ts",
+  "compatibility_date": "2024-01-01",
+  "env": {
+    "production": {
+      "vars": {
+        "NODE_ENV": "production",
+        "API_KEY": "your-prod-api-key",
+        "DATABASE_URL": "your-prod-database-url"
+      }
+    },
+    "staging": {
+      "vars": {
+        "NODE_ENV": "staging",
+        "API_KEY": "your-staging-api-key",
+        "DATABASE_URL": "your-staging-database-url"
+      }
+    },
+    "local": {
+      "vars": {
+        "NODE_ENV": "local",
+        "API_KEY": "your-local-api-key",
+        "DATABASE_URL": "your-local-database-url"
+      }
     }
   }
 }
@@ -116,84 +142,93 @@ node bin/index.js create-project --config my-project-config.json --deploy
 
 ## 🎯 使用场景
 
-### 1. 快速原型开发
+### 1. 本地开发
 ```bash
-# 生成简单配置
-node bin/index.js create-project --generate-config --name "prototype"
+# 创建项目
+router-cli create-project --name "my-dev-app"
 
-# 编辑配置文件，添加需要的资源
-# 然后部署
-node bin/index.js create-project --config prototype-config.json --deploy
+# 设置本地开发变量
+cd my-dev-app
+cp .dev.vars.example .dev.vars
+# 编辑 .dev.vars 文件
+
+# 启动本地开发
+npm run dev
 ```
 
-### 2. 团队协作
-- 将配置文件提交到版本控制
-- 团队成员可以快速部署相同配置的项目
-- 支持不同环境的配置文件
+### 2. 多环境部署
+```bash
+# 部署到测试环境
+router-cli deploy --env staging
+
+# 部署到生产环境
+router-cli deploy --env production
+```
 
 ### 3. CI/CD 集成
 ```yaml
 # GitHub Actions 示例
-- name: Deploy with Config
+- name: Deploy to Cloudflare Workers
+  env:
+    CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+    CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
   run: |
-    node bin/index.js create-project --config ${{ github.workspace }}/deploy-config.json --deploy
+    router-cli create-project --name "my-ci-app"
+    cd my-ci-app
+    router-cli deploy
 ```
 
-### 4. 多环境部署
-```bash
-# 生产环境
-./scripts/config-deploy.sh configs/production.json
-
-# 测试环境
-./scripts/config-deploy.sh configs/staging.json
-```
+### 4. 团队协作
+- 使用统一的配置模板
+- 环境变量通过 CI/CD 管理
+- 本地开发变量隔离
 
 ## 📊 优势对比
 
-### 之前（命令行参数）
+### 之前（复杂配置）
 ```bash
-node bin/index.js create-project \
-  --name "my-project" \
-  --template api \
-  --env-vars "NODE_ENV=production,API_VERSION=v1" \
-  --compatibility-date "2024-01-01" \
-  --compatibility-flags "nodejs_compat" \
-  --deploy
+# 需要手动配置多个文件
+# 环境变量管理复杂
+# 本地开发配置繁琐
 ```
 
-### 现在（配置文件）
+### 现在（简化配置）
 ```bash
-# 1. 生成配置
-node bin/index.js create-project --generate-config --name "my-project"
+# 1. 创建项目（自动生成配置）
+router-cli create-project --name "my-project"
 
-# 2. 编辑配置文件（一次性）
+# 2. 设置本地开发变量
+cp .dev.vars.example .dev.vars
 
-# 3. 使用配置部署
-node bin/index.js create-project --config my-project-config.json --deploy
+# 3. 多环境部署
+router-cli deploy --env staging
+router-cli deploy --env production
 ```
 
 ## ⚠️ 注意事项
 
-1. **配置文件优先级**：使用 `--config` 时，其他命令行参数会被忽略
-2. **配置文件验证**：CLI 会验证配置文件的格式和必需字段
-3. **路径支持**：支持相对路径和绝对路径
-4. **版本控制**：建议将配置文件提交到版本控制，但注意敏感信息
+1. **环境变量优先级**：环境变量 > 配置文件 > 默认值
+2. **本地开发变量**：`.dev.vars` 文件不会被提交到版本控制
+3. **多环境配置**：`wrangler.jsonc` 支持生产、测试、本地环境
+4. **CI/CD 友好**：支持环境变量直接配置
 
 ## 🔍 故障排除
 
-### 配置文件错误
+### 环境变量问题
 ```bash
-# 检查配置文件格式
-cat my-config.json | jq .
+# 检查环境变量
+echo $CLOUDFLARE_API_TOKEN
+echo $CLOUDFLARE_ACCOUNT_ID
 
-# 重新生成配置文件
-node bin/index.js create-project --generate-config --name "new-project"
+# 重新配置
+router-cli config
 ```
 
 ### 部署失败
 1. 检查 API Token 权限
-2. 验证 KV 和 D1 的 ID 是否正确
+2. 验证 Account ID 是否正确
 3. 确保项目名称唯一
+4. 检查网络连接
 
 ## 📞 支持
 
