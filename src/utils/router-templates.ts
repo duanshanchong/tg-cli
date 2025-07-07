@@ -24,16 +24,7 @@ export class RouterTemplateGenerator {
     await this.generateRoutes(projectPath, config);
     await this.generateEnvironment(projectPath, config);
     
-    // 根据配置生成额外文件
-    if (config.features.database) {
-      await this.generateDatabaseConfig(projectPath);
-    }
-    if (config.features.auth) {
-      await this.generateAuthConfig(projectPath);
-    }
-    if (config.features.cache) {
-      await this.generateCacheConfig(projectPath);
-    }
+
   }
 
   private static async generatePackageJson(projectPath: string, config: RouterV7Config): Promise<void> {
@@ -70,8 +61,11 @@ export class RouterTemplateGenerator {
     // 生成 wrangler.jsonc 配置文件（现代格式）
     const wranglerConfig = {
       name: config.name,
-      compatibility_date: "2024-01-01",
+      compatibility_date: config.wrangler?.compatibility_date || "2024-01-01",
       main: "src/index.ts",
+      ...(config.wrangler?.compatibility_flags && {
+        compatibility_flags: config.wrangler.compatibility_flags
+      }),
       env: {
         production: {
           name: `${config.name}-prod`,
@@ -85,32 +79,13 @@ export class RouterTemplateGenerator {
             vars: config.environment
           })
         }
-      },
-      ...(config.features.kv && {
-        kv_namespaces: [
-          {
-            binding: "MY_KV",
-            id: "your-kv-namespace-id",
-            preview_id: "your-kv-preview-id"
-          }
-        ]
-      }),
-      ...(config.features.r2 && {
-        r2_buckets: [
-          {
-            binding: "MY_BUCKET",
-            bucket_name: "your-bucket-name"
-          }
-        ]
-      })
+      }
     };
 
     fs.writeFileSync(
       path.join(projectPath, 'wrangler.jsonc'), 
       JSON.stringify(wranglerConfig, null, 2)
     );
-
-    // 只使用 wrangler.jsonc 配置文件
   }
 
   private static async generateTypeScriptConfig(projectPath: string): Promise<void> {
@@ -232,8 +207,7 @@ router.get('/api/hello', () => {
 });
 
 // 导入其他路由模块
-${config.features.auth ? "import './auth';" : ''}
-${config.features.database ? "import './database';" : ''}
+// 可以根据需要添加更多路由模块
 
 // 404 错误处理 - 必须在所有路由之后
 router.all('*', () => new Response(JSON.stringify({ error: 'Not Found' }), { 
@@ -244,12 +218,7 @@ router.all('*', () => new Response(JSON.stringify({ error: 'Not Found' }), {
 
     fs.writeFileSync(path.join(routesPath, 'index.ts'), routesIndex);
 
-    // 根据模板生成特定路由
-    if (config.template === 'api') {
-      await this.generateApiRoutes(routesPath);
-    } else if (config.template === 'fullstack') {
-      await this.generateFullstackRoutes(routesPath);
-    }
+
   }
 
   private static async generateApiRoutes(routesPath: string): Promise<void> {

@@ -5,16 +5,13 @@ export interface CloudflareConfig {
 
 export interface RouterV7Config {
   name: string;
-  template: 'basic' | 'api' | 'fullstack' | 'custom';
-  features: {
-    database?: boolean;
-    auth?: boolean;
-    cache?: boolean;
-    kv?: boolean;
-    r2?: boolean;
-  };
   environment: {
     [key: string]: string;
+  };
+  wrangler?: {
+    compatibility_date?: string;
+    compatibility_flags?: string[];
+    vars?: Record<string, string>;
   };
 }
 

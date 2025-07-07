@@ -3,6 +3,7 @@ import { CloudflareApp } from '../types';
 import { ConfigManager } from './config-manager';
 import fs from 'fs';
 import path from 'path';
+import chalk from 'chalk';
 
 export class WranglerManager {
   /**
@@ -11,15 +12,11 @@ export class WranglerManager {
   private async executeWrangler(args: string[]): Promise<string> {
     return new Promise(async (resolve, reject) => {
       const config = ConfigManager.getConfig();
-      if (!config?.apiToken) {
-        reject(new Error('API Token not configured. Please run "router-cli config" first.'));
-        return;
+      // 只在有 token 时才设置环境变量
+      const env = { ...process.env };
+      if (config?.apiToken) {
+        env.CLOUDFLARE_API_TOKEN = config.apiToken;
       }
-
-      const env = { 
-        ...process.env,
-        CLOUDFLARE_API_TOKEN: config.apiToken
-      };
 
       const child = spawn('npx', ['wrangler', ...args], {
         stdio: ['pipe', 'pipe', 'pipe'],
@@ -88,16 +85,13 @@ export class WranglerManager {
 
       // 在项目目录中运行 wrangler
       const config = ConfigManager.getConfig();
-      
-      // 检查是否已经有 OAuth Token 登录
       const env = { ...process.env };
-      
-      // 在非交互式环境中，直接使用 API Token
-      if (!config?.apiToken) {
-        throw new Error('API Token not configured. Please run "router-cli config" first.');
+      if (config?.apiToken) {
+        env.CLOUDFLARE_API_TOKEN = config.apiToken;
+        console.log('Using API Token for authentication');
+      } else {
+        console.log('No API Token found, will use wrangler login (OAuth) if available');
       }
-      console.log('Using API Token for authentication');
-      env.CLOUDFLARE_API_TOKEN = config.apiToken;
 
       // 先安装依赖
       await this.installDependencies(projectPath, env);
@@ -114,16 +108,28 @@ export class WranglerManager {
         let stderr = '';
 
         child.stdout?.on('data', (data) => {
-          stdout += data.toString();
+          const output = data.toString();
+          stdout += output;
+          // 实时显示关键信息
+          if (output.includes('Deployed to') || output.includes('deployed to') || output.includes('URL:') || output.includes('https://')) {
+            console.log(chalk.gray(output.trim()));
+          }
         });
 
         child.stderr?.on('data', (data) => {
-          stderr += data.toString();
+          const output = data.toString();
+          stderr += output;
+          // 显示警告信息，但不作为错误
+          if (!output.includes('Error') && !output.includes('error')) {
+            console.log(chalk.yellow(output.trim()));
+          }
         });
 
         child.on('close', (code) => {
           if (code === 0) {
-            resolve(stdout);
+            // 尝试从输出中提取更多信息
+            const enhancedOutput = this.enhanceDeployOutput(stdout, projectName, environment);
+            resolve(enhancedOutput);
           } else {
             console.error('Wrangler deployment failed:');
             console.error('Exit code:', code);
@@ -142,9 +148,6 @@ export class WranglerManager {
     }
   }
 
-  /**
-   * 安装项目依赖
-   */
   private async installDependencies(projectPath: string, env: any): Promise<void> {
     return new Promise((resolve, reject) => {
       const child = spawn('npm', ['install'], {
@@ -177,6 +180,22 @@ export class WranglerManager {
         reject(new Error(`Failed to execute npm install: ${error.message}`));
       });
     });
+  }
+
+  /**
+   * 增强部署输出信息
+   */
+  private enhanceDeployOutput(stdout: string, projectName: string, environment: string): string {
+    let enhancedOutput = stdout;
+    const urlMatch = stdout.match(/URL:\s*(https?:\/\/[^\s]+)/);
+    if (urlMatch) {
+      enhancedOutput = enhancedOutput.replace(urlMatch[0], chalk.green(urlMatch[1]));
+    }
+    const deployedMatch = stdout.match(/Deployed to\s*(https?:\/\/[^\s]+)/);
+    if (deployedMatch) {
+      enhancedOutput = enhancedOutput.replace(deployedMatch[0], chalk.green(deployedMatch[1]));
+    }
+    return enhancedOutput;
   }
 
   /**
@@ -246,4 +265,4 @@ export class WranglerManager {
       throw new Error(`Failed to set secret: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
-} 
+}
